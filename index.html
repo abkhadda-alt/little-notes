@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Little Notes — Daily Reports</title>
+  <meta name="description" content="Turn quick daycare notes into warm daily reports for parents, in seconds, with AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fff8f1;
+      --card: #ffffff;
+      --ink: #2b2335;
+      --muted: #6f6578;
+      --line: #f0e3d6;
+      --accent: #ff7a59;
+      --accent-ink: #ffffff;
+      --accent-soft: #ffe7de;
+      --sun: #ffc94a;
+      --leaf: #4bb39a;
+      --sky: #7aa7ff;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(84, 52, 30, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Nunito", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, #ffe3c9 0 120px, transparent 121px),
+        radial-gradient(circle at 95% 20%, #dff3ec 0 150px, transparent 151px),
+        var(--bg);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 56px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 14px; background: var(--accent);
+      display: grid; place-items: center; font-size: 24px; box-shadow: var(--shadow);
+    }
+    h1 { font-family: "Fraunces", serif; font-size: clamp(28px, 4vw, 40px); margin: 0; letter-spacing: -0.5px; }
+    .tagline { color: var(--muted); margin: 6px 0 28px; font-size: 17px; max-width: 620px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 22px; box-shadow: var(--shadow);
+    }
+    .card h2 { font-family: "Fraunces", serif; font-size: 20px; margin: 0 0 16px; }
+    label { display: block; font-weight: 700; font-size: 14px; margin: 14px 0 6px; }
+    input, select, textarea {
+      width: 100%; font: inherit; color: var(--ink); background: #fffdfb;
+      border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 12px; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .moods { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mood {
+      border: 1.5px solid var(--line); background: #fffdfb; border-radius: 999px;
+      padding: 7px 12px; cursor: pointer; font: inherit; font-size: 14px; color: var(--ink);
+    }
+    .mood[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
+    .hint { font-size: 13px; color: var(--muted); margin-top: 6px; display: flex; justify-content: space-between; gap: 8px; }
+    .linkbtn { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
+    .btn {
+      margin-top: 18px; width: 100%; border: 0; border-radius: 14px; padding: 14px 16px;
+      background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; font-size: 16px;
+      cursor: pointer; box-shadow: 0 8px 18px rgba(255, 122, 89, .3); transition: transform .1s, opacity .15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: .6; cursor: wait; transform: none; }
+    .output {
+      white-space: pre-wrap; line-height: 1.65; font-size: 15.5px; min-height: 260px;
+      background: #fffdfb; border: 1.5px dashed var(--line); border-radius: 14px; padding: 16px;
+    }
+    .output.empty { color: var(--muted); display: grid; place-items: center; text-align: center; }
+    .output-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .ghost {
+      flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 10px;
+      font: inherit; font-weight: 700; cursor: pointer; color: var(--ink);
+    }
+    .ghost:disabled { opacity: .5; cursor: not-allowed; }
+    .error { color: #b3261e; background: #fdecea; border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: 14px; display: none; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px; }
+    @media (max-width: 820px) { .features { grid-template-columns: 1fr; } }
+    .feature { background: rgba(255,255,255,.7); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 14px; color: var(--muted); }
+    .feature b { color: var(--ink); display: block; margin-bottom: 2px; }
+    footer { margin-top: 28px; text-align: center; color: var(--muted); font-size: 13px; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" aria-hidden="true">🧸</div>
+      <h1>Little Notes</h1>
+    </header>
+    <p class="tagline">Type your quick notes from the day. Get a warm, clear report for parents in seconds — in English or French.</p>
+
+    <div class="grid">
+      <section class="card" aria-labelledby="in-title">
+        <h2 id="in-title">1. Today's notes</h2>
+
+        <div class="row">
+          <div>
+            <label for="childName">Child's first name</label>
+            <input id="childName" placeholder="e.g. Maya" maxlength="40" autocomplete="off" />
+          </div>
+          <div>
+            <label for="language">Language</label>
+            <select id="language">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Overall mood</label>
+        <div class="moods" id="moods">
+          <button type="button" class="mood" data-mood="happy" aria-pressed="true">😊 Happy</button>
+          <button type="button" class="mood" data-mood="calm" aria-pressed="false">😌 Calm</button>
+          <button type="button" class="mood" data-mood="tired" aria-pressed="false">🥱 Tired</button>
+          <button type="button" class="mood" data-mood="fussy" aria-pressed="false">😣 A bit fussy</button>
+        </div>
+
+        <label for="tone">Tone</label>
+        <select id="tone">
+          <option value="warm">Warm & cheerful</option>
+          <option value="brief">Short & sweet</option>
+          <option value="professional">Professional</option>
+        </select>
+
+        <label for="notes">Quick notes</label>
+        <textarea id="notes" maxlength="2000" placeholder="nap 1-2:30, ate all lunch, painted with fingers, played outside, cried a bit at drop-off"></textarea>
+        <div class="hint">
+          <button type="button" class="linkbtn" id="sample">✨ Try sample notes</button>
+          <span id="count">0 / 2000</span>
+        </div>
+
+        <button class="btn" id="go">Write the report</button>
+        <div class="error" id="error" role="alert"></div>
+      </section>
+
+      <section class="card" aria-labelledby="out-title">
+        <h2 id="out-title">2. Report for parents</h2>
+        <div class="output empty" id="output" aria-live="polite">Your report will appear here ✏️</div>
+        <div class="output-actions">
+          <button class="ghost" id="copy" disabled>📋 Copy</button>
+          <button class="ghost" id="again" disabled>🔄 Rewrite</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="features">
+      <div class="feature"><b>⏱️ Saves time</b>From minutes per child to a few seconds.</div>
+      <div class="feature"><b>✅ No made-up facts</b>The AI only uses what you wrote.</div>
+      <div class="feature"><b>🇨🇦 Bilingual</b>English and Québec French reports.</div>
+    </div>
+
+    <footer>Demo project · Use first names only — don't enter sensitive personal info.</footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const notes = $("notes"), out = $("output"), go = $("go"), err = $("error");
+    let mood = "happy";
+
+    const samples = [
+      "nap 12:45-2:30, ate all her pasta, didnt want carrots, finger painting w/ blue+yellow, played in sandbox, little scrape on knee at 3pm cleaned + bandaid, asked for mom at snack but ok after",
+      "napped 1-2, ate half lunch + all fruit, built tall block tower w/ Leo, singing circle, outside 45 min, needs more diapers tmrw",
+      "short nap 1:15-1:45, ate snack well, sensory bin w/ rice, read 3 books, very chatty today, slightly runny nose this afternoon",
+    ];
+    let sampleIdx = 0;
+
+    function updateCount() { $("count").textContent = `${notes.value.length} / 2000`; }
+    notes.addEventListener("input", updateCount);
+
+    $("sample").onclick = () => {
+      notes.value = samples[sampleIdx++ % samples.length];
+      if (!$("childName").value) $("childName").value = "Maya";
+      updateCount();
+      notes.focus();
+    };
+
+    $("moods").addEventListener("click", (e) => {
+      const b = e.target.closest(".mood");
+      if (!b) return;
+      document.querySelectorAll(".mood").forEach((m) => m.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      mood = b.dataset.mood;
+    });
+
+    function showError(msg) { err.textContent = msg; err.style.display = msg ? "block" : "none"; }
+
+    async function generate() {
+      showError("");
+      if (!notes.value.trim()) { showError("Add a few notes first (or tap “Try sample notes”)."); return; }
+      go.disabled = true;
+      go.innerHTML = '<span class="spinner"></span>Writing…';
+      try {
+        const r = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            childName: $("childName").value,
+            notes: notes.value,
+            mood,
+            language: $("language").value,
+            tone: $("tone").value,
+          }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || "Something went wrong.");
+        out.classList.remove("empty");
+        out.textContent = data.report;
+        $("copy").disabled = false;
+        $("again").disabled = false;
+      } catch (e) {
+        showError(e.message || "Something went wrong.");
+      } finally {
+        go.disabled = false;
+        go.textContent = "Write the report";
+      }
+    }
+
+    go.onclick = generate;
+    $("again").onclick = generate;
+    $("copy").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(out.textContent);
+        $("copy").textContent = "✅ Copied";
+        setTimeout(() => ($("copy").textContent = "📋 Copy"), 1500);
+      } catch { showError("Couldn't copy — select the text and copy it manually."); }
+    };
+  </script>
+</body>
+</html>

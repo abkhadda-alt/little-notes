@@ -1,0 +1,8 @@
+{
+  "name": "little-notes-daycare-reports",
+  "version": "1.0.0",
+  "description": "AI tool that turns quick daycare notes into friendly daily reports for parents.",
+  "type": "module",
+  "private": true,
+  "license": "MIT"
+}
