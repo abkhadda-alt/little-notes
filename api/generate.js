@@ -1,7 +1,12 @@
 // Serverless function (Vercel) — turns quick staff notes into a parent-friendly daily report.
 // The Gemini API key stays on the server and is never exposed to the browser.
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+// Main model first, then backups if it's overloaded.
+const MODELS = [
+  process.env.GEMINI_MODEL || "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite",
+].filter((m, i, all) => all.indexOf(m) === i);
 const MAX_NOTES = 2000;
 
 const LANGS = { en: "English", fr: "Canadian French (Québec)" };
@@ -62,8 +67,8 @@ export default async function handler(req, res) {
     tone: body.tone,
   });
 
-  const callGemini = () =>
-    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+  const callGemini = (model) =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
@@ -74,13 +79,13 @@ export default async function handler(req, res) {
     });
 
   try {
-    // Retry briefly when the model is overloaded (503) or hiccups (500).
+    // If a model is overloaded (503), hiccups (500) or isn't available (404),
+    // fall back to the next one so parents still get their report.
     let r, data;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      r = await callGemini();
+    for (const model of MODELS) {
+      r = await callGemini(model);
       data = await r.json().catch(() => ({}));
-      if (r.ok || ![500, 503].includes(r.status)) break;
-      await new Promise((ok) => setTimeout(ok, 1200 * (attempt + 1)));
+      if (r.ok || ![404, 500, 503].includes(r.status)) break;
     }
 
     if (!r.ok) {

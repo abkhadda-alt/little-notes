@@ -28,7 +28,7 @@ Little Notes does it in about 3 seconds per child, in **English or Québec Frenc
 |---|---|
 | Front end | HTML, CSS, vanilla JavaScript (no framework) |
 | Back end | Vercel serverless function (Node.js) |
-| AI | Google Gemini API (`gemini-3.8-flash`) |
+| AI | Google Gemini API (`gemini-3.8-flash`, with automatic fallback models) |
 | Hosting | Vercel (free tier) |
 
 ## 📁 Project structure
