@@ -1,7 +1,7 @@
 // Serverless function (Vercel) — turns quick staff notes into a parent-friendly daily report.
 // The Gemini API key stays on the server and is never exposed to the browser.
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const MAX_NOTES = 2000;
 
 const LANGS = { en: "English", fr: "Canadian French (Québec)" };
