@@ -62,26 +62,35 @@ export default async function handler(req, res) {
     tone: body.tone,
   });
 
-  try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 600 },
-        }),
-      }
-    );
+  const callGemini = () =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        // Generous budget: newer models spend part of it "thinking" before writing.
+        generationConfig: { temperature: 0.6, maxOutputTokens: 2048 },
+      }),
+    });
 
-    const data = await r.json();
+  try {
+    // Retry briefly when the model is overloaded (503) or hiccups (500).
+    let r, data;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      r = await callGemini();
+      data = await r.json().catch(() => ({}));
+      if (r.ok || ![500, 503].includes(r.status)) break;
+      await new Promise((ok) => setTimeout(ok, 1200 * (attempt + 1)));
+    }
+
     if (!r.ok) {
-      const msg = data?.error?.message || "AI service error";
-      const status = r.status === 429 ? 429 : 502;
-      return res.status(status).json({
-        error: status === 429 ? "Too many requests right now — try again in a minute." : msg,
-      });
+      if (r.status === 429) {
+        return res.status(429).json({ error: "Too many requests right now — try again in a minute." });
+      }
+      if (r.status === 503) {
+        return res.status(503).json({ error: "The AI is very busy right now. Please try again in a moment." });
+      }
+      return res.status(502).json({ error: data?.error?.message || "AI service error" });
     }
 
     const report = (data?.candidates?.[0]?.content?.parts || [])

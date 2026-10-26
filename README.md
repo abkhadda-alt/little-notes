@@ -6,7 +6,7 @@ Educators write "nap 1–2:30, ate lunch, painted" all day long. Turning those s
 
 Little Notes does it in about 3 seconds per child, in **English or Québec French**.
 
-🔗 **Live demo:** _add your Vercel link here_
+🔗 **Live demo:** https://little-notes-green.vercel.app
 
 ![Little Notes screenshot](docs/screenshot.png)
 
